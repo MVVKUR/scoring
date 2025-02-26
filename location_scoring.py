@@ -6,11 +6,8 @@ import random  # For demo purposes
 import requests
 import json
 
-# For ngrok tunneling:
-from pyngrok import ngrok, conf
 
-# Optionally set the ngrok binary path explicitly (update the path if necessary)
-conf.get_default().ngrok_path = "/Users/66548/Downloads/ngrok"  # or "/opt/homebrew/bin/ngrok" for M1/M2 Macs
+
 
 # Set page configuration
 st.set_page_config(
@@ -101,17 +98,20 @@ with col1:
     # Simplified input fields
     restaurant_name = st.text_input("Restaurant Name", placeholder="Pempek Abing")
     location_address = st.text_input("Full Address", placeholder="Jl. Prof Dr Satrio No. 16C, Kuningan, Jakarta")
-    query = restaurant_name + " " + location_address
+    query = restaurant_name + location_address
+    # Add a note about the AI analysis
     st.info("Our AI will analyze all relevant factors including rental costs, foot traffic, income levels, commercial density, transport access, and competitors.")
 
 with col2:
+    # Display a map (in a real app, this would use the address to show the actual location)
     st.markdown('<div class="sub-header">Location Map</div>', unsafe_allow_html=True)
     
     # For demo, centered on Jakarta
     m = folium.Map(location=[-6.2088, 106.8456], zoom_start=12)
     
     if location_address:
-        # In a real app, you would geocode the address. For demo, use random coordinates around Jakarta.
+        # In a real app, you would geocode the address to get coordinates
+        # For demo, we'll use random coordinates around Jakarta
         lat = -6.2088 + random.uniform(-0.02, 0.02)
         lng = 106.8456 + random.uniform(-0.02, 0.02)
         
@@ -174,21 +174,28 @@ prompt = """**Restaurant Location Analysis**
 """
 
 client = Groq(api_key="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")
-def fixed_nonrag(prompt, query):
+def fixed_nonrag(prompt,query):
     completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "assistant", "content": f'{prompt} also Give the data source or the time you get the data'},
-            {"role": "user", "content": query},
-        ],
-        temperature=0.7,
-        max_completion_tokens=4096,
-        top_p=0.95,
-        stream=False,
-        stop=None,
-    )
+    model="llama-3.3-70b-versatile",
+    messages=[
+        {
+            "role": "assistant",
+            "content": f' {prompt} also Give the data source or the time you get the data'  
+        },
+        {
+            "role": "user",
+            "content": query
+        },
+    ],
+    temperature=0.7,
+    max_completion_tokens=4096,
+    top_p=0.95,
+    stream=False,
+    stop=None,
+)   
     content_list = [choice.message.content for choice in completion.choices]
     return content_list
+
 
 if st.button("Analyze Location", type="primary"):
     if not restaurant_name or not location_address:
@@ -197,16 +204,79 @@ if st.button("Analyze Location", type="primary"):
         with st.spinner("AI is analyzing location data..."):
             import time
             time.sleep(2)
+            
             analysis = fixed_nonrag(prompt, query)
             for content in analysis:
                 st.markdown(content)
-        st.download_button(
-            label="Download Analysis as PDF",
-            data="Sample PDF content",  # In a real app, generate a PDF from the analysis
-            file_name=f"{restaurant_name}_location_analysis.pdf",
-            mime="application/pdf",
-        )
+            
+        #     st.markdown(f'<div class="analysis-title">{analysis["title"]}</div>', unsafe_allow_html=True)
+        #     st.markdown(f'<div class="meta-info">**Data Source:** {analysis["data_source"]}</div>', unsafe_allow_html=True)
+        #     st.markdown(f'**Location:** {analysis["location"]}')
+        #     st.markdown(f'**City/District:** {analysis["city_district"]}')
+            
+        #     st.markdown('**Analysis Factors:**')
+            
+        #     # Rental Cost
+        #     st.markdown('<div class="factor-header">1. Rental Cost:</div>', unsafe_allow_html=True)
+        #     for point in analysis["analysis_factors"]["rental_cost"]["points"]:
+        #         st.markdown(f'<div class="factor-point">* {point}</div>', unsafe_allow_html=True)
+            
+        #     # Foot Traffic
+        #     st.markdown('<div class="factor-header">2. Foot Traffic:</div>', unsafe_allow_html=True)
+        #     for point in analysis["analysis_factors"]["foot_traffic"]["points"]:
+        #         st.markdown(f'<div class="factor-point">* {point}</div>', unsafe_allow_html=True)
+            
+        #     # Income Levels
+        #     st.markdown('<div class="factor-header">3. Income Levels & Purchasing Power:</div>', unsafe_allow_html=True)
+        #     for point in analysis["analysis_factors"]["income_levels"]["points"]:
+        #         st.markdown(f'<div class="factor-point">* {point}</div>', unsafe_allow_html=True)
+            
+        #     # Office Density
+        #     st.markdown('<div class="factor-header">4. Office & Commercial Density:</div>', unsafe_allow_html=True)
+        #     for point in analysis["analysis_factors"]["office_density"]["points"]:
+        #         st.markdown(f'<div class="factor-point">* {point}</div>', unsafe_allow_html=True)
+            
+        #     # Public Transport
+        #     st.markdown('<div class="factor-header">5. Public Transport & Accessibility:</div>', unsafe_allow_html=True)
+        #     for point in analysis["analysis_factors"]["public_transport"]["points"]:
+        #         st.markdown(f'<div class="factor-point">* {point}</div>', unsafe_allow_html=True)
+            
+        #     # Competitor Density
+        #     st.markdown('<div class="factor-header">6. Competitor Density & Market Viability:</div>', unsafe_allow_html=True)
+        #     for point in analysis["analysis_factors"]["competitor_density"]["points"]:
+        #         st.markdown(f'<div class="factor-point">* {point}</div>', unsafe_allow_html=True)
+            
+        #     # Output
+        #     st.markdown('<div class="output-section">Output:</div>', unsafe_allow_html=True)
+            
+        #     # Location Score
+        #     st.markdown(f'<div class="score-display">Location Score: {analysis["location_score"]}</div>', unsafe_allow_html=True)
+            
+        #     # Strengths
+        #     st.markdown('**Strengths:**')
+        #     for strength in analysis["strengths"]:
+        #         st.markdown(f'<div class="strength-point">+ {strength}</div>', unsafe_allow_html=True)
+            
+        #     # Challenges
+        #     st.markdown('**Challenges:**')
+        #     for challenge in analysis["challenges"]:
+        #         st.markdown(f'<div class="challenge-point">- {challenge}</div>', unsafe_allow_html=True)
+            
+        #     # Recommendation
+        #     st.markdown('<div class="recommendation-box">', unsafe_allow_html=True)
+        #     st.markdown('**Recommendation:**')
+        #     st.markdown(analysis["recommendation"])
+        #     st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Option to download the analysis as PDF (in a real app)
+            st.download_button(
+                label="Download Analysis as PDF",
+                data="Sample PDF content",  # In a real app, this would generate a PDF
+                file_name=f"{restaurant_name}_location_analysis.pdf",
+                mime="application/pdf",
+            )
 
+# Information section at the bottom
 with st.expander("About the Analysis Framework"):
     st.markdown("""
     Our AI-powered restaurant location analysis evaluates the following key factors:
@@ -238,13 +308,3 @@ with st.expander("About the Analysis Framework"):
     
     The AI combines these factors to generate an overall location score, key strengths and challenges, and tailored recommendations for your specific restaurant concept.
     """)
-
-# ----- ngrok Tunneling -----
-# This block will only run if the script is executed as the main module.
-if __name__ == "__main__":
-    # Ensure the port matches your Streamlit app's port (8509)
-    try:
-        public_url = ngrok.connect(port=8509)
-        print("Streamlit app is publicly available at:", public_url)
-    except Exception as e:
-        print("Error starting ngrok tunnel:", e)
