@@ -1,0 +1,7 @@
+streamlit
+folium
+groq
+streamlit-folium 
+random  # For demo purposes
+requests
+json
